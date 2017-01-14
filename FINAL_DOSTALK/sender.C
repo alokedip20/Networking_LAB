@@ -120,8 +120,8 @@ void access_type(){
 	a.h.ah=2;
 	s.es=FP_SEG(receiver);
 	a.x.di=FP_OFF(receiver);
-	flag[0]=0xff;
-	flag[1]=0xff;
+	flag[0]=0x01;
+	flag[1]=0x01;
 	s.ds=FP_SEG(flag);
 	a.x.si=FP_SEG(flag);
 	int86x(PKT_INT,&a,&b,&s);
