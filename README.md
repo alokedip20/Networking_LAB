@@ -24,7 +24,7 @@ In this assignment an application has been developed by which users of two compu
 
 											LH PCNTPK INT=0X60 (PCNTPK.COM should be copied into C:\ drive to execute this command)
 
-				After Executing the abode command the output was like following :
+				After Executing the above command the output was like following :
 
 											Packet driver is at segment 167A
 											Interrupt number 0xA (10)
@@ -62,24 +62,21 @@ In this assignment an application has been developed by which users of two compu
 
 				Function Description:
 
-								1.	get_driver_info():	<CLASS,TYPE,NUMBER> are three global variables in the code and those							 variables will be used in the access_type() function and have been 							 assigned the value by this function.
+								1.	get_driver_info():	<CLASS,TYPE,NUMBER> are three global variables in the 												     code and those variables will be used in the access_t												  ype() function and have been assigned the value by 												       this function.
 
-								2.	get_mac(unsigned char *add):	This function will store the mac address of the virtual 										device into "add" buffer.
+								2.	get_mac(unsigned char *add):	This function will store the mac address of t													     he virtual device into "add" buffer.
 
-								3.	access_type():		Which type of packet the application will receive can be set by this 							function and by this function the "receiver" (Interrupt handler) can be 						set so that when ever a packet(having specified type,determined by the 							value of CX) will be received the receiver function will be called with 						some specific arguments. After successful execution of this function an 						unsigned int "HANDLE" will be returned and this "HANDLE" will be used 			                through out the application for receiving packets.
+								3.	access_type():		Which type of packet the application will receive can be set by this function and by this function the "receiver" (Interrupt handler) can be set so that when ever a packet(having specified type,determined by the value of CX) will be received the receiver function will be called with some specific arguments. After successful execution of this function an unsigned int "HANDLE" will be returned and this "HANDLE" will be used through out the application for receiving packets.
 
-								4.	get_receive_mode():	This function will return the receive mode of the respective 									"HANDLE",which has already been initialised by access_type()
+								4.	get_receive_mode():	This function will return the receive mode of the res												     pective "HANDLE",which has already been initialised by access_type()
 
-								5.	set_receive_mode():	 This function will set the receive mode to desired one. There are 6 							 modes are available. In this application mode 6 has been used as all 							 packets should be received.
+								5.	set_receive_mode():	 This function will set the receive mode to desired 												      one. There are 6 modes are available. In this applic												   ation mode 6 has been used as all packets should be received.
 
-								6.	create_packet():	 In this function only first 14 bytes of Ethernet packet has been								 initialised. 
+								6.	create_packet():	 In this function only first 14 bytes of Ethernet 												      packet has been initialised. 
 
 								7.	send_packet(unsigned char *packet,unsigned length):	this function will send the packet.
 
 								8.	release_type():		 This function ends access to packets associated with a handle returned 						 by access_type(). The handle is no longer valid. 	
 
-#Resource : 
-
-				I have taken reference from #"http://www.cs.vsb.cz/grygarek/PS/packet/pds111.txt" for Details function definations of those above specified functions.
-
-#Run The code : 		To run the code "tc" editor should be used with compilation mode -> "huge". As the source and 									Destination Mac address has been hard-coded inside the application so before establishing new 									communication the destination address should be changed and the code should be recompiled. 
+#Run The code : 		
+			To run the code "tc" editor should be used with compilation mode -> "huge". As the source and Destination Mac address has been hard-coded inside the application so before establishing new communication the destination address should be changed and the code should be recompiled. 
