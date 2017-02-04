@@ -305,7 +305,7 @@ void main(){
 	get_receive_mode(PKT_INT);
 	//create_packet();
 	get_driver_info(PKT_INT2);
-	get_mac(my_add1,PKT_INT2);
+	get_mac(my_add2,PKT_INT2);
 	access_type(PKT_INT2);
 	printf("HANDLE IN MAIN AFTER 2nd ACCESS_TYPE : %x\n",handle[1]);
 	set_receive_mode(PKT_INT2);
@@ -372,6 +372,7 @@ int routing(unsigned char *data){
 	unsigned char source[6];
 	unsigned char netID;
 	int i,j,flag,ARP_index;
+	ARP_index=-1;
 	printf("in routing : \n");
 	for(i=0;i<6;i++){
 			source[i]=data[i+6];
@@ -386,7 +387,7 @@ int routing(unsigned char *data){
 		}
 		if(!flag){
 			netID=MY_ARP[i].iip[0];
-			ARP_index=i;
+			//ARP_index=i;
 			break;
 		}
 	}
@@ -401,19 +402,30 @@ int routing(unsigned char *data){
 		printf("%s\n","different network" );
 		fflush(stdout);
 		fflush(stdin);
-		if (netID==0x01){
-			for(i=0;i<6;i++){
-			  data[i]=MY_ARP[data[14]-1].mac[i];
-			  data[i+6]=MY_ADDR1[i];
+		for(i=0;i<2;i++){
+			if(MY_ARP[i].iip[0]==data[14]&&MY_ARP[i].iip[1]==data[15]){
+				ARP_index=i;
+				break;
 			}
-			send_packet(data,100,PKT_INT);
 		}
-		else if(netID==0x02){
-			for(i=0;i<6;i++){
-			  data[i]=MY_ARP[data[14]-1].mac[i];
-			  data[i+6]=MY_ADDR2[i];
+		if(ARP_index>=0){
+			if (netID==0x01){
+				for(i=0;i<6;i++){
+			  		data[i]=MY_ARP[ARP_index].mac[i];
+			  		data[i+6]=MY_ADDR1[i];
+				}
+				send_packet(data,100,PKT_INT);
 			}
-			send_packet(data,100,PKT_INT2);
+			else if(netID==0x02){
+				for(i=0;i<6;i++){
+			  		data[i]=MY_ARP[ARP_index].mac[i];
+			  		data[i+6]=MY_ADDR2[i];
+				}
+				send_packet(data,100,PKT_INT2);
+			}
+		}
+		else{
+			printf("%s\n","No entry for coming netID found" );
 		}
 		return 1;
 	}
