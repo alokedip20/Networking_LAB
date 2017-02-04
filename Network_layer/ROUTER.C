@@ -37,16 +37,16 @@ void free_buffer(unsigned int l){
 	}
 	return;
 }
-int filter_packet(){
+int filter_packet(unsigned char *buf){
 	int ok=0;
 	int i;
 	for(i=0;i<6;i++){
-		if(BUFF[i]!=MY_ADDR1[i]&&BUFF[i]!=MY_ADDR2[i]){
+		if(buf[i]!=MY_ADDR1[i]&&buf[i]!=MY_ADDR2[i]){
 			ok=1;
 			break;
 		}
 	}
-	if(!ok&&(BUFF[12]!=0xab)||(BUFF[13]!=0xcd)){
+	if(!ok&&(buf[12]!=0xab)||(buf[13]!=0xcd)){
 		ok=1;
 	}
 	if(ok==0){
@@ -57,11 +57,11 @@ int filter_packet(){
 	}
 	return ok;
 }
-void display_packet(unsigned int l){
+void display_packet(unsigned int l,unsigned char *buf){
 	int i;
-	if(filter_packet()==0){
-		printf("%s\n",&BUFF[16]);
-		if(routing(BUFF)){
+	if(filter_packet(buf)==0){
+		printf("%s\n",&buf[16]);
+		if(routing(buf)){
 			printf("%s\n","Routing has been done" );
 		}
 		else{
@@ -82,7 +82,7 @@ void interrupt receiver(bp,di,si,ds,es,dx,cx,bx,ax,ip,cs,flags){
 		length=cx;
 	}
 	if(ax==1){
-		display_packet(length);
+		display_packet(length,BUFF);
 		length=0;
 	}
 	return;
@@ -96,6 +96,11 @@ void interrupt receiver2(bp,di,si,ds,es,dx,cx,bx,ax,ip,cs,flags){
 		length=cx;
 	}
 	if(ax==1){
+			 display_packet(length,BUFF2);
+			 //printf("\n %s\n",&BUFF2[16]);
+			 /*for(i=0;i<16;i++){
+				printf("%02x : ",BUFF2[i]);
+			 } */
 	}
 	return;
 }
@@ -394,15 +399,20 @@ int routing(unsigned char *data){
 	}
 	else{
 		printf("%s\n","different network" );
-		for(i=0;i<6;i++){
-			  data[i]=MY_ARP[data[14]-1].mac[i];
-		}
 		fflush(stdout);
 		fflush(stdin);
 		if (netID==0x01){
+			for(i=0;i<6;i++){
+			  data[i]=MY_ARP[data[14]-1].mac[i];
+			  data[i+6]=MY_ADDR1[i];
+			}
 			send_packet(data,100,PKT_INT);
 		}
 		else if(netID==0x02){
+			for(i=0;i<6;i++){
+			  data[i]=MY_ARP[data[14]-1].mac[i];
+			  data[i+6]=MY_ADDR2[i];
+			}
 			send_packet(data,100,PKT_INT2);
 		}
 		return 1;
