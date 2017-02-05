@@ -17,8 +17,6 @@ unsigned int length=0;
 unsigned char PACKET[100];
 unsigned int RCV1=0;
 unsigned int RCV2=0;
-//unsigned char MY_DEST[6]={0x08,0x00,0x27,0x00,0x2b,0xb3};
-unsigned char MY_DEST[6]={0x08,0x00,0x27,0x2e,0x11,0x75};
 unsigned char MY_ADDR1[6];
 unsigned char MY_ADDR2[6];
 unsigned int PACKET_RECEIVED=0;
@@ -63,6 +61,7 @@ void display_packet(unsigned int l,unsigned char *buf){
 		printf("%s\n",&buf[16]);
 		if(routing(buf)){
 			printf("%s\n","Routing has been done" );
+			printf("\n\n\n %s \n\n\n","----------------------------------");
 		}
 		else{
 			printf("%s\n","routing not needed" );
@@ -96,11 +95,7 @@ void interrupt receiver2(bp,di,si,ds,es,dx,cx,bx,ax,ip,cs,flags){
 		length=cx;
 	}
 	if(ax==1){
-			 display_packet(length,BUFF2);
-			 //printf("\n %s\n",&BUFF2[16]);
-			 /*for(i=0;i<16;i++){
-				printf("%02x : ",BUFF2[i]);
-			 } */
+		display_packet(length,BUFF2);
 	}
 	return;
 }
@@ -227,8 +222,8 @@ void set_receive_mode(unsigned char INT){
 void packet_stat(){
 	printf("RECEIVED PACKET PACKET = %d\n",PACKET_RECEIVED);
 	printf("PACKET REJECTED = %d\n",PACKET_DROPPED);
-	printf("receiver1: %d\n",RCV1);
-	printf("receiver2: %d\n",RCV2);
+	printf("receiver1 received : %d\n",RCV1);
+	printf("receiver2 received : %d\n",RCV2);
 	return;
 }
 void release_type(unsigned char INT){
@@ -244,20 +239,6 @@ void release_type(unsigned char INT){
 	packet_stat();
 	printf("DONE RELEASED HANDLE= =%x\n",b.x.bx);
 	//exit(1);
-}
-void create_packet(){
-	int i;
-	for(i=0;i<100;i++){
-		PACKET[i]=0x00;
-	}
-	for(i=0;i<6;i++){
-		PACKET[i]=MY_DEST[i];
-		PACKET[i+6]=MY_ADDR1[i];
-	}
-	PACKET[12]=0xab;
-	PACKET[13]=0xcd;
-	printf("PACKET HAS BEEN CREATED\n");
-	return;
 }
 void send_packet(unsigned char *buffer,unsigned length,unsigned char INT){
 	int i;
@@ -303,36 +284,12 @@ void main(){
 	printf("HANDLE IN MAIN AFTER 1ST ACCESS_TYPE : %x\n",handle[0]);
 	set_receive_mode(PKT_INT);
 	get_receive_mode(PKT_INT);
-	//create_packet();
 	get_driver_info(PKT_INT2);
 	get_mac(my_add2,PKT_INT2);
 	access_type(PKT_INT2);
 	printf("HANDLE IN MAIN AFTER 2nd ACCESS_TYPE : %x\n",handle[1]);
 	set_receive_mode(PKT_INT2);
 	get_receive_mode(PKT_INT2);
-	/*while(1){
-		for(j=0;j<20;j++){
-			c=getch();
-			if((int)c==13){
-				word[j]='\0';
-				break;
-			}
-			word[j]=c;
-			putch(word[j]);
-		}
-		printf("\n THE MESSAGE : %s\n",word);
-		if(strncmp(word,ter,3)==0){
-			break;
-		}
-		length=strlen(word);
-		k=14;
-		for(j=0;j<length;j++){
-			PACKET[k++]=word[j];
-		}
-		PACKET[k]='\0';
-		send_packet(&PACKET,100,PKT_INT);
-		flush(word);
-	}*/
 	getch();
 	release_type(PKT_INT);
 	release_type(PKT_INT2);
@@ -391,9 +348,11 @@ int routing(unsigned char *data){
 			break;
 		}
 	}
+	printf("%s\n","ROUTER HAS RECEIVED PACKET DATA : ");
 	for(i=0;i<16;i++){
 		printf("%02x ",data[i]);
 	}
+	printf("\n");
 	if(netID==data[14]){
 		printf("%s\n","Same network" );
 		return 0;
@@ -409,19 +368,21 @@ int routing(unsigned char *data){
 			}
 		}
 		if(ARP_index>=0){
-			if (netID==0x01){
+			if (data[14]==0x01){
 				for(i=0;i<6;i++){
-			  		data[i]=MY_ARP[ARP_index].mac[i];
-			  		data[i+6]=MY_ADDR1[i];
+					data[i]=MY_ARP[ARP_index].mac[i];
+					data[i+6]=MY_ADDR1[i];
 				}
 				send_packet(data,100,PKT_INT);
+				printf("%s %02x\n","PACKET HAS COME FROM netID:2 AND WILL BE SENT TO netID:1 BY ",PKT_INT);
 			}
-			else if(netID==0x02){
+			else if(data[14]==0x02){
 				for(i=0;i<6;i++){
-			  		data[i]=MY_ARP[ARP_index].mac[i];
-			  		data[i+6]=MY_ADDR2[i];
+					data[i]=MY_ARP[ARP_index].mac[i];
+					data[i+6]=MY_ADDR2[i];
 				}
 				send_packet(data,100,PKT_INT2);
+				printf("%s %02x\n","PACKET HAS COME FROM netID:1 AND WILL BE SENT TO netID:2 BY ",PKT_INT2);
 			}
 		}
 		else{
