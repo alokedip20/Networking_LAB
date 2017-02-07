@@ -1,3 +1,5 @@
+//NET ID 2 WILL BE CONNECTED WITH USB ETHERNET
+//NET ID 1 WILL BE CONNECTED WITH PCI ETHERNET
 #include<stdio.h>
 #include<dos.h>
 #include<stdlib.h>
@@ -301,9 +303,9 @@ void create_table(void){
 	 MY_ARP[0].mac[0]=0x08;
 	 MY_ARP[0].mac[1]=0x00;
 	 MY_ARP[0].mac[2]=0x27;
-	 MY_ARP[0].mac[3]=0x2e;
-	 MY_ARP[0].mac[4]=0x11;
-	 MY_ARP[0].mac[5]=0x75;
+	 MY_ARP[0].mac[3]=0xd6;
+	 MY_ARP[0].mac[4]=0xf4;
+	 MY_ARP[0].mac[5]=0x4a;
 	 //////////////////////////////
 	 MY_ARP[1].iip[0]=0x02;
 	 MY_ARP[1].iip[1]=0x01;
