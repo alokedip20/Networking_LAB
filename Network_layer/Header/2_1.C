@@ -303,14 +303,14 @@ void create_table(){
 	// table for 1.3
 	MY_ARP[0].iip[0]=0x02;
 	MY_ARP[0].iip[1]=0x03;
-	MY_ARP[0].mac[0]=0x00;
+	MY_ARP[0].mac[0]=0x08;
 	MY_ARP[0].mac[1]=0x00;
-	MY_ARP[0].mac[2]=0x00;
-	MY_ARP[0].mac[3]=0x00;
-	MY_ARP[0].mac[4]=0x00;
-	MY_ARP[0].mac[5]=0x00;
+	MY_ARP[0].mac[2]=0x27;
+	MY_ARP[0].mac[3]=0xa3;
+	MY_ARP[0].mac[4]=0xbb;
+	MY_ARP[0].mac[5]=0x9d;
 	 //////////////////////////////
-	 // iip-mac mapping for 2.2	
+	 // iip-mac mapping for 2.2 
 	MY_ARP[1].iip[0]=0x02;
 	MY_ARP[1].iip[1]=0x02;
 	MY_ARP[1].mac[0]=0x08;
