@@ -72,23 +72,7 @@ int routing(unsigned char *data){
 	int i,j,flag,ARP_index;
 	ARP_index=-1;
 	printf("in routing : \n");
-	for(i=0;i<6;i++){
-			source[i]=data[i+6];
-	}
-	for(i=0;i<2;i++){
-		flag=0;
-		for(j=0;j<6;j++){
-			if(MY_ARP[i].mac[j]!=source[j]){
-				flag=1;
-				break;
-			}
-		}
-		if(!flag){
-			netID=MY_ARP[i].iip[0];
-			//ARP_index=i;
-			break;
-		}
-	}
+	netID=data[16];
 	printf("%s\n","ROUTER HAS RECEIVED PACKET DATA : ");
 	for(i=0;i<16;i++){
 		printf("%02x ",data[i]);
