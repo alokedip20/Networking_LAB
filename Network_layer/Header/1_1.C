@@ -333,7 +333,7 @@ void put_dest(unsigned char *buffer){
 	int i;
 	unsigned char netID;
 	netID=buffer[14];
-	if(netID==0x02){
+	if(netID==0x02||(buffer[14]==0x01&&buffer[15]==0x02)){
 		for(i=0;i<6;i++){
 			buffer[i]=MY_ARP[1].mac[i];
 		}
