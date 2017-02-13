@@ -18,10 +18,6 @@ int ReadHexFile(FILE *inf, unsigned char *dest) {
 	  dest++;
 	}
   }
-  
-/*  if (n != EOF) {
-	printf("%s\n","*");  // handle syntax error
-  }*/
   return count;
 }
 void create_table(void){
@@ -29,69 +25,6 @@ void create_table(void){
 	 FILE *inf;
 	 int n;
 	 unsigned char *hex;
-	 // available hosts for netID-1 ==>1.1 & 1.3
-	 //available hosts for netID-2 ==>2.1 && 2.3
-	 // iip -mac mapping for 1.1    ==> client1.1
- /*    MY_ARP[0].iip[0]=0x01;
-	 MY_ARP[0].iip[1]=0x01;
-	 MY_ARP[0].mac[0]=0x08;
-	 MY_ARP[0].mac[1]=0x00;
-	 MY_ARP[0].mac[2]=0x27;
-	 MY_ARP[0].mac[3]=0xd6;
-	 MY_ARP[0].mac[4]=0xf4;
-	 MY_ARP[0].mac[5]=0x4a;
-	 //////////////////////////////
-	 // iip-mac mapping for 1.2     ==>router adapter for netID-1
-	 MY_ARP[1].iip[0]=0x01;
-	 MY_ARP[1].iip[1]=0x02;
-	 MY_ARP[1].mac[0]=0x08;
-	 MY_ARP[1].mac[1]=0x00;
-	 MY_ARP[1].mac[2]=0x27;
-	 MY_ARP[1].mac[3]=0x93;
-	 MY_ARP[1].mac[4]=0xd6;
-	 MY_ARP[1].mac[5]=0x34;
-	 /////////////////////////////
-	 //iip-mac mapping for 2.1      ==>client2.1
-	 MY_ARP[2].iip[0]=0x02;
-	 MY_ARP[2].iip[1]=0x01;
-	 MY_ARP[2].mac[0]=0x08;
-	 MY_ARP[2].mac[1]=0x00;
-	 MY_ARP[2].mac[2]=0x27;
-	 MY_ARP[2].mac[3]=0x00;
-	 MY_ARP[2].mac[4]=0x2b;
-	 MY_ARP[2].mac[5]=0xb3;
-	 ///////////////////////////////
-	 //iip-mac mapping for 2.2      ==>router adapter for netID2
-	 MY_ARP[3].iip[0]=0x02;
-	 MY_ARP[3].iip[1]=0x02;
-	 MY_ARP[3].mac[0]=0x08;
-	 MY_ARP[3].mac[1]=0x00;
-	 MY_ARP[3].mac[2]=0x27;
-	 MY_ARP[3].mac[3]=0xe6;
-	 MY_ARP[3].mac[4]=0x2e;
-	 MY_ARP[3].mac[5]=0xef;
-	 //////////////////////////////
-	 //iip-mac mapping for 1.3
-	 MY_ARP[4].iip[0]=0x01;
-	 MY_ARP[4].iip[1]=0x03;
-	 MY_ARP[4].mac[0]=0x08;
-	 MY_ARP[4].mac[1]=0x00;
-	 MY_ARP[4].mac[2]=0x27;
-	 MY_ARP[4].mac[3]=0xe6;
-	 MY_ARP[4].mac[4]=0x25;
-	 MY_ARP[4].mac[5]=0xeb;
-	 //////////////////////////////
-	 //iip-mac mapping for 2.3
-	 MY_ARP[5].iip[0]=0x02;
-	 MY_ARP[5].iip[1]=0x03;
-	 MY_ARP[5].mac[0]=0x08;
-	 MY_ARP[5].mac[1]=0x00;
-	 MY_ARP[5].mac[2]=0x27;
-	 MY_ARP[5].mac[3]=0xa3;
-	 MY_ARP[5].mac[4]=0xbb;
-	 MY_ARP[5].mac[5]=0x9d;*/
-	 //////////////////////////////
-
 	 inf = fopen("routing.txt", "rt");
 	 n = ReadHexFile(inf, NULL);
 	 printf("%d\n",n);
