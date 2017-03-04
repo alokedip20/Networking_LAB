@@ -127,6 +127,7 @@ void *handler_read(void *sock){
 		}
 		else{
 			if(data[0] == '\0'){
+				cout<<"NULLLL READ"<<endl;
 				break;
 			}
 			//cout<<"The received messege "<<data<<endl;
@@ -158,6 +159,9 @@ void *handler_write(void *sock){
 	while(1){
 		sleep(10);
 		parse_messege(data,client_sock);
+		if(data[0] == '\0'){
+			break;
+		}
 		if((n = write(client_sock,data,255)) < 0){
 			error("Error writing client socket");
 		}
