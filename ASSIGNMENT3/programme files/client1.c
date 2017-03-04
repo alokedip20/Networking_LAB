@@ -86,7 +86,7 @@ void *handler_read(void *sock){
 			if(data[0] == '\0'){
 				break;
 			}
-			printf("");              //filter messege before reading to stop spamming
+			//printf("");              //filter messege before reading to stop spamming
 			filter_msg(data);
 			bzero(data,256);
 		}
