@@ -10,6 +10,7 @@
 #include <sqlite3.h>
 #include <string>
 #include <sstream>
+#include <limits.h>
 using namespace std;
 #include "mysqlite.h"
 void error(string msg);
@@ -25,6 +26,7 @@ void *handler_write(void *);
 #define MAX_CLIENT 20
 #define DATABASE_NAME "Networking_Assignmenet3.db"
 #define TABLE_NAME "USERS"
+unsigned long int TIME_LIMIT = ULLONG_MAX;
 int main(int argc, char *argv[])
 {
 	int old_socket,new_socket,port,bind_flag,l,n;
@@ -32,6 +34,7 @@ int main(int argc, char *argv[])
 	struct sockaddr_in server_addr,client_addr;
 	validation(argc);
 	// Create IPv4 Internet protocol + Stream socket
+	cout<<"TIME LIMIT : "<<TIME_LIMIT<<endl;
 	if((old_socket = socket(AF_INET,SOCK_STREAM,0))<0){
 		error("can not create 1st socket");
 	}
@@ -127,7 +130,7 @@ void *handler_read(void *sock){
 		}
 		else{
 			if(data[0] == '\0'){
-				cout<<"NULLLL READ"<<endl;
+				cout<<"NULLLL READ"<<endl;             //thread termination condition
 				break;
 			}
 			//cout<<"The received messege "<<data<<endl;
@@ -153,20 +156,27 @@ void *handler_read(void *sock){
 void *handler_write(void *sock){
 	int client_sock = *(int*)sock;
 	int n;
+	int K = 0;
 	record R;
 	// Retrieve messege from database and populate char array and the databse should contain the socket id as primary key 
 	char data[255];//="messege from server from write thread"; 	// This will be repalced by messege retrieved from database for two connected users
 	while(1){
-		sleep(10);
+		sleep(1);
 		parse_messege(data,client_sock);
 		if(data[0] == '\0'){
-			break;
-		}
-		if((n = write(client_sock,data,255)) < 0){
-			error("Error writing client socket");
+			if(K > TIME_LIMIT){
+				break;
+			}
+			K++;                      // thread termination condition 
 		}
 		else{
-			cout<<"Has been written to socket no "<<client_sock<<endl;
+			if((n = write(client_sock,data,255)) < 0){
+				error("Error writing client socket");
+			}
+			else{
+				cout<<"Has been written to socket no "<<client_sock<<endl;
+			}
+			bzero(data,255);
 		}
 	}
 }		
