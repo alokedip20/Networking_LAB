@@ -26,14 +26,28 @@ int main(int argc, char *argv[])
 	if(client_socket < 0){
 		error("socket can not be created");
 	}
+	/*
+		** The gethostbyname() function returns a structure of type hostent for
+       	   the given host name.  Here name is either a hostname or an IPv4
+           address in standard dot notation.
+
+        *** 1st argument : char *name -> it will represent the name of the server.
+        	If this argument will be provided in IPv4 format (A.B.C.D) then no lok up will be used.
+
+	*/
 	server = gethostbyname(argv[1]);
 	if(server == NULL){
 		error(" No host has been found");
 	}
+	printf("%s\n"," Server has been found Succesfully" );
 	bzero((char *)&server_addr,sizeof(server_addr));
 	bzero(prev_msg,255);
 	server_addr.sin_family = AF_INET;
-	server_addr.sin_addr.s_addr = inet_addr(argv[1]);
+	/*
+		**The inet_addr() function interprets character strings representing host addresses expressed in standard dotted-decimal 
+		  notation and returns host addresses suitable for use as an Internet address.
+	*/
+	server_addr.sin_addr.s_addr = inet_addr(argv[1]);  // To convert internet address to network address
 	server_addr.sin_port = htons(port);
 	if(connect(client_socket,(const struct sockaddr *)&server_addr,sizeof(server_addr)) < 0){
 			error("Can not connect with the server");
@@ -41,6 +55,10 @@ int main(int argc, char *argv[])
 	pthread_t read_thread,write_thread;
 	int *thread_sock = (int *)malloc(1);
 	*thread_sock = client_socket;
+	/*
+		** Created two threads one for for reading from the socket and one for writing into 
+		   Socket
+	*/
 	if(pthread_create((pthread_t *)&read_thread,NULL,handler_read,(void *)thread_sock) < 0){
 			printf("%s\n","Can not create read thread , Drop connection" );
 	}
@@ -74,7 +92,7 @@ void *handler_read(void *sock){
 			if(data[0] == '\0'){
 				break;
 			}
-			//printf("");              //filter message before reading to stop spamming
+			//filter message before reading to stop duplicated reading. 
 			filter_msg(data);
 			bzero(data,256);
 		}
@@ -84,7 +102,7 @@ void *handler_write(void *sock){
 	int client_sock = *(int*)sock;
 	char data[256];
 	int n;
-	printf("%s\n","enter message" );
+	printf("%s\n","Enter Your User name" );
 	bzero(data,sizeof(data));
 	while(fgets(data,255,stdin) !=NULL){
 		if((n=write(client_sock,data,strlen(data))) < 0){
@@ -108,6 +126,5 @@ void filter_msg(char buf[]){
 		printf("RECEIVED MESSEGE => %s\n",prev_msg );
 		return;
 	}
-	//printf(" No %s\n",buf );
 	return;
 }

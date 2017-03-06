@@ -154,6 +154,7 @@ void *handler_read(void *sock){
 	int n;
 	char data[256];
 	string parse[2];
+	char ACK_MSG[] = "You have successfully registered in server You can type Messege\0";
 	while(1){
 		if((n = read(client_sock,data,255)) < 0){
 			error("Error reading client socket");
@@ -174,6 +175,7 @@ void *handler_read(void *sock){
 				if(!strncmp(data,d,strlen(data)-1)){
 				}
 				insert(d,"",1,client_sock);
+				write(client_sock,ACK_MSG,strlen(ACK_MSG));
 			}
 			else{
 				/*
