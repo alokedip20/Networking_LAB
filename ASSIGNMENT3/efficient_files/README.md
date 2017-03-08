@@ -31,6 +31,6 @@
 		<li>
 			<p> For each client server will create a thread. Each thread corresponding to one client will spawn two threads , <strong> 1. For reading from client socket and to write them into database --- 2. For reading from database and writing to the corresponding client socket.</strong></p>
 		</li>
-		<img src="file-page1"/>
+		<img src="file-page1.jpg"/>
 	</ul>
 </br>
