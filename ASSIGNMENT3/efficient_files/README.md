@@ -13,12 +13,23 @@
 		</ul>
 	</ul>
 	<h3> Objective : </h3>
-	<p> There will be multiple clients and every two clients can chat with each other. Server will have a database and the database will have an entry for each client and each entry has four fields
-	<ul>
-		<li>USER-ID</li>
-		<li>USER-NAME</li>
-		<li>DATA</li>
-		<li>STATUS</li>
-	</ul>
+	<p> There will be multiple clients and every two clients can chat with each other. Server will have a database and the all the messages will get stored into the database.
 	</p>
+	<h3> Model : </h3>
+	<p>
+		The schema of the database -> Each entry has four fields : 
+		<ul>
+			<li>USER-ID</li>
+			<li>USER-NAME</li>
+			<li>DATA</li>
+			<li>STATUS</li>
+		</ul>
+	</p>
+	<h3> Algorithm : </h3>
+	<ul>
+		<h4> Server Side tasks: </h4>
+		<li>
+			<p> For each client server will create a thread. Each thread corresponding to one client will spawn two threads , <strong> 1. For reading from client socket and to write them into database --- 2. For reading from database and writing to the corresponding client socket.</strong></p>
+		</li>
+	</ul>
 </br>
