@@ -45,7 +45,6 @@ int main(int argc, char *argv[])
 	struct sockaddr_in server_addr,client_addr;
 	validation(argc);                     // Validate proper command line arguments
 
-	cout<<"TIME LIMIT : "<<TIME_LIMIT<<endl; 
 	
 	/* Create IPv4 Internet protocol + Stream socket
 		** AF_INET : for domain -> IPv4
@@ -66,8 +65,7 @@ int main(int argc, char *argv[])
 	*/
 	server_addr.sin_family = AF_INET;
 	server_addr.sin_port = htons(port);     // htons convert the 2 byte integer to network byte order
-	//server_addr.sin_addr.s_addr = INADDR_ANY;//inet_addr("10.2.88.231");
-	server_addr.sin_addr.s_addr = inet_addr("10.42.0.1");
+	server_addr.sin_addr.s_addr = inet_addr("10.31.6.60");
 	if((bind_flag = bind(old_socket,(struct sockaddr *)&server_addr,sizeof(server_addr))) < 0){
 		error("Binding error");
 	}
@@ -172,8 +170,7 @@ void *handler_read(void *sock){
 		}
 		else{
 			if(data[0] == '\0'){
-				cout<<"NULLLL READ"<<endl;             //thread termination condition
-				break;
+				break;//thread termination condition
 			}
 			/*
 				** Assign user with corresponding socket_descriptor in database
@@ -181,7 +178,7 @@ void *handler_read(void *sock){
 				** insert(user_name,data,status,socket_descriptor)
 			*/
 			if(!strncmp(data,special_query,strlen(special_query))){
-				cout<<"**************** Going to diplay Active users **************** "<<endl;
+				//cout<<"**************** Going to diplay Active users **************** "<<endl;
 				stringstream t;
 				int no = count_active_users();
 				t << no;
@@ -191,8 +188,6 @@ void *handler_read(void *sock){
 				{
 					frame +=ALL[i].username+"\n";
 				}
-				cout<<"+++++++++++++++++++ Total no of Active Users : +++++++++++++++++ "<<t.str()<<endl;
-				cout<<frame<<endl;
 				write(client_sock,frame.c_str(),strlen(frame.c_str()));
 				frame = "";				
 			}
@@ -217,7 +212,6 @@ void *handler_read(void *sock){
 					** update(user_name,data) ->update the database
 				*/						
 				if(retrieve_status(parse[0])){
-					cout<<" ************ ACTIVE : *************** "<<parse[0]<<endl;
 					update(parse[0],parse[1]);
 				}
 				else{
@@ -245,13 +239,10 @@ void *handler_write(void *sock){
 				update(name,"","0");
 				break;			// thread termination condition
 			}
-			cout<<" TIME lIMIT : "<<TIME_LIMIT<<endl;
-			cout<<" +++++++++++++++++++++ VALUE OF K FOR SOCKET "<<client_sock<<" = +++++++++++++++++++ "<<K<<endl<<endl;
 			K++;                       
 		}
 		else{
 			K = TIME_LIMIT - 20;
-			cout<<" TIME lIMIT : "<<TIME_LIMIT<<" SUB : == "<<K<<endl;
 			if((n = write(client_sock,data,255)) < 0){
 				error("Error writing client socket");
 			}
