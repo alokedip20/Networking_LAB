@@ -30,13 +30,11 @@ static int call_back(void *data,int argc,char *argv[],char **azColName){
    result.username = argv[1];
    result.message = argv[2];
    result.status = argv[3];
-   cout<<"IN HEADER :------------------- \n"<<"ID : "<<result.id<<" \nUSer name :"<<result.username<<" \nMessege : "<<result.message<<endl;
    return 0;
 }
 static int call_back_status(void *data,int argc,char *argv[],char **azColName){
    record *res = (record *)data;
    res ->status = argv[0];
-   cout<<"IN HEADER :------------------- \n"<<"ID : "<<result.id<<" \nUSer name :"<<result.username<<" \nMessege : "<<result.message<<endl;
    return 0;
 }
 static int count_callback(void *count,int argc,char *argv[],char **azColname){
@@ -96,12 +94,11 @@ void insert(string user_name,string data,int state,int id){
       temp2 << id;
       s2 = temp2.str();
       s = temp.str();
-      cout<<TABLE_NAME<<endl;
       string sql_query = "INSERT INTO "+TABLE_NAME +"(ID,USERNAME,DATA,STATUS)" \
                            " VALUES ("+s2+","+"'"+A+"'"+","+"'"+data+"'"+","+"'"+s+"'"+");";
       db = sqlite3_exec(database_object,(const char *)sql_query.c_str(),call_back, 0,&error);
       if(db == SQLITE_OK){
-         cout<<"ID : "<<id<<" User name : "<<user_name<<"\n Data : "<<data<<"\n state : "<<state<<endl;
+         // SUCCESSFULL QUERY
       }
       else{
          cout<<error<<endl;
@@ -117,14 +114,11 @@ void update(string user_name,string data,string stat = "1"){
    int db;
    sqlite3 *database_object=NULL;
    char *error = 0;
-   cout<<" IN UPDATE :"<<user_name<<endl;
    db = sqlite3_open(DATABASE_NAME.c_str(),&database_object);
    if(db == SQLITE_OK){
       string sql_query = "UPDATE "+TABLE_NAME+" SET DATA"+" = "+"'"+data+"', STATUS = "+stat+" WHERE USERNAME = "+"'"+user_name+"'"+";";
-      cout<<sql_query<<endl;
       db = sqlite3_exec(database_object,(const char *)sql_query.c_str(),call_back,0,&error);
       if(db == SQLITE_OK){
-         cout<<" data for the user : "<<user_name<<" May be updated may not be"<<endl;
       }
       else{
          cout<<" Error in Update : "<<error<<endl;
@@ -147,11 +141,8 @@ record retrieve(int id){
    clean_result();
    if(db == SQLITE_OK){
       string sql_query = "SELECT * FROM "+TABLE_NAME+" WHERE id = "+s2+";";
-      cout <<" QUERY : ------------------- >"<<sql_query<<endl;
       db = sqlite3_exec(database_object,(const char *)sql_query.c_str(),call_back,0,&error);
       if(db == SQLITE_OK){
-         cout<<"*************** successfully fetched *************** " <<endl;
-         cout<<"ID : "<<result.id<<"\n USERNAME : "<<result.username<<"\n Status : "<<result.status<<endl;
       }
       else{
          cout<<"Error in retrieve "<<error<<endl;
@@ -171,13 +162,11 @@ int count_active_users(void){
    	db = sqlite3_open(DATABASE_NAME.c_str(),&database_object);
    	if(db == SQLITE_OK){
     	string sql_query = "SELECT COUNT(*) FROM "+TABLE_NAME+" WHERE STATUS = 1;";
-      	cout <<" QUERY : ------------------- >"<<sql_query<<endl;
       	db = sqlite3_exec(database_object,(const char *)sql_query.c_str(),count_callback,(void *)&count,&error);
       	if(db == SQLITE_OK){
-        	cout<<" successfully fetched" <<endl;
       	}
       	else{
-        	cout<<error<<endl;
+        	   cout<<error<<endl;
       	}
    	}
    	else{
@@ -199,10 +188,8 @@ bool retrieve_status(string user_name){
    record user_status;
    if(db == SQLITE_OK){
       string sql_query = "SELECT STATUS FROM "+TABLE_NAME+" WHERE USERNAME = "+"'"+user_name+"';";
-      cout <<" QUERY : ------------------- >"<<sql_query<<endl;
       db = sqlite3_exec(database_object,(const char *)sql_query.c_str(),call_back_status,(void *)&user_status,&error);
       if(db == SQLITE_OK){
-         cout<<" successfully fetched" <<endl;
       }
       else{
          cout<<"Error in retrieve "<<error<<endl;
@@ -212,7 +199,6 @@ bool retrieve_status(string user_name){
       sqlite3_errmsg(database_object);
    }
    sqlite3_close(database_object);
-   //cout<<" USER STATUS FOR : "<<user_name<<" IS "<<(result.status == "1")<<endl;
    return (user_status.status == "1");
 }
 record* retrieve_active_user(void){
@@ -226,11 +212,8 @@ record* retrieve_active_user(void){
    clean_result();
    if(db == SQLITE_OK){
       string sql_query = "SELECT USERNAME FROM "+TABLE_NAME+" WHERE STATUS = 1;";
-      cout <<" QUERY : ------------------- >"<<sql_query<<endl;
       db = sqlite3_exec(database_object,(const char *)sql_query.c_str(),all_user,(void *)&K,&error);
       if(db == SQLITE_OK){
-         cout<<"*************** successfully fetched *************** " <<endl;
-         //cout<<"ID : "<<result.id<<"\n USERNAME : "<<result.username<<"\n Status : "<<result.status<<endl;
       }
       else{
          cout<<"Error in retrieve "<<error<<endl;
