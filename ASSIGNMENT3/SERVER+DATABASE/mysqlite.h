@@ -9,13 +9,14 @@ typedef struct user_data record;
 void create_table(string table_name);
 void create_database(string database_name);
 void insert(string user_name,string data,int state,int id);
-void update(int id,string data);
+void update(string user_name,string data,string stat);
 int count_active_users(void);
 void clean_result(void);
-bool retrieve_status(string user_name);
+int retrieve_status(string user_name);
 record* retrieve_active_user(void);
-string TABLE_NAME = "";
-string DATABASE_NAME = "";
+bool socket_update(string user_name,string status,int id);
+string TABLE_NAME = "USERS";
+string DATABASE_NAME = "Networking_Assignmenet3.db";
 record result;
 string A;
 record *ALL_USER = NULL;
@@ -47,11 +48,9 @@ void create_database(string database_name){
    sqlite3 *database_object=NULL;
    db= sqlite3_open((const char *)database_name.c_str(),&database_object);
    if(database_object){
-      cout<<" Database "<<database_name<<" has been created"<<endl;
       DATABASE_NAME = database_name;
    }
    else{
-      cout<<" Error while creating database"<<endl;
       sqlite3_errmsg(database_object);
    }  
    sqlite3_close(database_object); 
@@ -70,7 +69,9 @@ void create_table(string table_name){
          "STATUS        INT      NOT NULL);";
       db = sqlite3_exec(database_object,(const char *)(sql_query.c_str()),call_back,0,&error);
       if(db == SQLITE_OK){
-         cout<<" Table "<<table_name<<" has been succesfully created"<<endl;
+         /*
+            ** cout<<" Table "<<table_name<<" has been succesfully created"<<endl;
+         */
       }
       else{
          cout<<error<<endl;
@@ -98,7 +99,9 @@ void insert(string user_name,string data,int state,int id){
                            " VALUES ("+s2+","+"'"+A+"'"+","+"'"+data+"'"+","+"'"+s+"'"+");";
       db = sqlite3_exec(database_object,(const char *)sql_query.c_str(),call_back, 0,&error);
       if(db == SQLITE_OK){
-         // SUCCESSFULL QUERY
+         /*
+            ** SUCCESSFULL QUERY
+         */
       }
       else{
          cout<<error<<endl;
@@ -122,6 +125,30 @@ void update(string user_name,string data,string stat = "1"){
       }
       else{
          cout<<" Error in Update : "<<error<<endl;
+      }
+   }
+   else{
+      sqlite3_errmsg(database_object);
+   }
+   sqlite3_close(database_object);
+}
+bool socket_update(string user_name,string status,int id = 0){
+   int db;
+   sqlite3 *database_object=NULL;
+   char *error = 0;
+   stringstream temp;
+   temp << id;
+   string data = temp.str();
+   db = sqlite3_open(DATABASE_NAME.c_str(),&database_object);
+   if(db == SQLITE_OK){
+      string sql_query = "UPDATE "+TABLE_NAME+" SET ID = "+data+", STATUS = "+status+" WHERE USERNAME = "+"'"+user_name+"'"+";";
+      db = sqlite3_exec(database_object,(const char *)sql_query.c_str(),call_back,0,&error);
+      if(db == SQLITE_OK){
+         return true;
+      }
+      else{
+         cout<<" Error in Socket Update : "<<error<<endl;
+         return false;
       }
    }
    else{
@@ -170,7 +197,7 @@ int count_active_users(void){
       	}
    	}
    	else{
-      sqlite3_errmsg(database_object);
+         sqlite3_errmsg(database_object);
    	}
    	sqlite3_close(database_object);
    	return count;
@@ -179,7 +206,7 @@ void clean_result(void){
    result.username = "";
    result.message = "";
 }
-bool retrieve_status(string user_name){
+int retrieve_status(string user_name){
    int db;
    sqlite3 *database_object=NULL;
    char *error = 0;
@@ -199,7 +226,14 @@ bool retrieve_status(string user_name){
       sqlite3_errmsg(database_object);
    }
    sqlite3_close(database_object);
-   return (user_status.status == "1");
+   if(user_status.status == "1"){
+      return 1;
+   }
+   else if(user_status.status == "0"){
+      return 0;
+   }
+   else 
+      return -1;
 }
 record* retrieve_active_user(void){
    int db;
