@@ -35,19 +35,43 @@
 		<li>After running the server on a specified port ( port > 1024) the server will wait for a client to connect with the server : -> <b>./server 8080</b></li>
 		<li> if a client will run on the server ip address with the specified port then server 		will ask the client to type username : 
 			<ol>
-				<li> ./client1 X.Y.Z.W PORT_NO </li>
-				<li> Server Response - > Please enter username :</li>
+				<li> <b>./client1 X.Y.Z.W PORT_NO</b> </li>
+				<li> <b>Server Response - > Please enter username :</b></li>
 			</ol>
-			<li> After getting the username from the client server will first check if the user has already an entry into the database, if not then it will create an entry for the user and assign the pin ans send back the acknowledgement message to the client. From next onwards the user must give its pin to logging into the server.</li>
+			<li> After getting the username from the client server will first check if the user has already an entry into the database, if not then it will create an entry for the user and assign the pin and send back the acknowledgement message to the client. From next onwards the user must give its pin to log into the server.</li>
 			<li> If database will have two entries for two clients: 
-				<img src=""/>
+				<p></p>
+				<table style="width:100%,border: 1px solid black;border-collapse: collapse;">
+  					<tr style="border: 1px solid black;border-collapse: collapse;">
+			  	  		<th style="border: 1px solid black;">User-ID</th>
+			    		<th style="border: 1px solid black;">UserName</th> 
+			    		<th style="border: 1px solid black;">Password</th>
+			    		<th style="border: 1px solid black;">Message</th>
+			    		<th style="border: 1px solid black;">Status</th>
+			  		</tr>
+	 				<tr style="border: 1px solid black;border-collapse: collapse;">
+	    				<td style="border: 1px solid black;">4</td>
+	    				<td style="border: 1px solid black;">ABC</td>
+	    				<td style="border: 1px solid black;">452</td>
+	    				<td style="border: 1px solid black;">Hi from XYZ</td>
+	    				<td style="border: 1px solid black;">1</td>
+	  				</tr>
+	  				<tr style="border: 1px solid black;border-collapse: collapse;">
+	    				<td style="border: 1px solid black;">5</td>
+	    				<td style="border: 1px solid black;">XYZ</td>
+	    				<td style="border: 1px solid black;">254</td>
+	    				<td style="border: 1px solid black;">Hi from ABC</td>
+	    				<td style="border: 1px solid black;">1</td>
+	  				</tr>
+				</table>
+
 				<b>User-1 wants to send message to User-2:</b>
 				User-1 will type : <b> user_name2@"message_for_user-2"</b>
 			</li>
 			<li>
 				Server will parse the total message and update the database with the message accordingly.
 			</li>
-			<li> If an user wants to log out from the server the the corresponding message that should be sent to server is => <b>user_name@"NULL"</b> Server will release the socket descriptor and terminate the thread for the corresponding client_socket and send a message indicating "successfull logging out message".
+			<li> If an user wants to log out from the server the corresponding message that should be sent to server is => <b>user_name@"NULL"</b> Server will release the socket descriptor and terminate the thread for the corresponding client_socket and send a message indicating "successfull logging out message".
 			</li>
 		</li>
 	</ul>
