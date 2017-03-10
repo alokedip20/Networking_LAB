@@ -13,6 +13,7 @@
 				</li>
 				<li> Another thread will retrieve data for a client and peform some short of filtering to prevent sending duplicate messages and after doing this it will write the filrered data to the particular client socket.</li>
 			</ol>
+			<img src="diag.jpg"/>
 </p>
 <h2> Setup the environment: </h2>
 <p> For socket programming we need some libraries and most of the linux operating system will have those headers and their binary pre-installed in the system. For this particular project we need sqlite3 headers and the binary. If sqlite3 binary and the header is not installed then we need to install them. The procedure is described as below: 
@@ -64,7 +65,6 @@
 	    				<td style="border: 1px solid black;">1</td>
 	  				</tr>
 				</table>
-
 				<b>User-1 wants to send message to User-2:</b>
 				User-1 will type : <b> user_name2@"message_for_user-2"</b>
 			</li>
