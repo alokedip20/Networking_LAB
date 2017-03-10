@@ -275,10 +275,14 @@ void *handler_write(void *sock){
 				srand(time(NULL));
 				if(socket_update(name,"0",rand()%1000)){
 					write(client_sock,logout,strlen(logout));
+					break;
 				}
-				//close(client_sock);
-				break;			// thread termination condition
+				else{
+					K = TIME_LIMIT - 1;
+				}
+				//close(client_sock);	
 			}
+			cout<<" Waiting to close the connectio ....... "<<name<<endl;
 			K++;                       
 		}
 		else{
