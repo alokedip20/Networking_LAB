@@ -65,7 +65,7 @@ int main(int argc, char *argv[])
 	*/
 	server_addr.sin_family = AF_INET;
 	server_addr.sin_port = htons(port);     // htons convert the 2 byte integer to network byte order
-	server_addr.sin_addr.s_addr = inet_addr("10.31.6.60");
+	server_addr.sin_addr.s_addr = inet_addr("192.168.2.102");
 	if((bind_flag = bind(old_socket,(struct sockaddr *)&server_addr,sizeof(server_addr))) < 0){
 		error("Binding error");
 	}
@@ -90,8 +90,8 @@ int main(int argc, char *argv[])
 				*** Data -> most recent message for the user will be stored
 				*** Status -> Online / Offline 
 	*/
-	create_database(DATABASE_NAME);
-	create_table(TABLE_NAME);
+	//create_database(DATABASE_NAME);
+	//create_table(TABLE_NAME);
 
 	/* accept the client socket 
 		** 1st argument : socket_descriptor that has been returned by socket()
@@ -164,13 +164,14 @@ void *handler_read(void *sock){
 	char NOT_ACTIVE[] = "USER is not active so can not send MEssege.\0";
 	char special_query[] = "finger\0";
 	string frame="";
+	int flag = -999;
 	while(1){
 		if((n = read(client_sock,data,255)) < 0){
 			error("Error reading client socket");
 		}
 		else{
 			if(data[0] == '\0'){
-				cout<<" Null Data has been received"<<endl;
+				cout<<" Null Data has been received. Client closed connection"<<endl;
 				close(client_sock);
 				break;//thread termination condition
 			}
@@ -199,8 +200,16 @@ void *handler_read(void *sock){
 				if(!strncmp(data,d,strlen(data)-1)){
 				}
 				cout<<" User hit server : "<<d<<endl;
-				insert(d,"",1,client_sock);
-				write(client_sock,ACK_MSG,strlen(ACK_MSG));
+				flag = retrieve_status(d);
+				if( flag == 0){
+					socket_update(d,"1",client_sock);
+					cout<<" User "<<d<<" already registered : Update socket for User : "<<d<<endl;
+					write(client_sock,"You are already registered",27);
+				}
+				else if(flag == -1){
+					insert(d,"",1,client_sock);
+					write(client_sock,ACK_MSG,strlen(ACK_MSG));
+				}
 			}
 			else{
 				/*
@@ -213,11 +222,12 @@ void *handler_read(void *sock){
 				sleep(1);					// To avoid "database lock" error 
 				/*
 					** update(user_name,data) ->update the database
-				*/						
-				if(retrieve_status(parse[0])){
+				*/
+				flag = retrieve_status(parse[0]);						
+				if( flag == 1){
 					update(parse[0],parse[1]);
 				}
-				else{
+				else if(flag  == 0 || flag == -1 ){
 					write(client_sock,NOT_ACTIVE,strlen(NOT_ACTIVE));
 				}
 			}
@@ -243,7 +253,10 @@ void *handler_write(void *sock){
 		if(data[0] == '\0'){
 			if(K >= TIME_LIMIT){
 				update(name,"","0");
-				write(client_sock,logout,strlen(logout));
+				srand(time(NULL));
+				if(socket_update(name,"0",rand()%1000)){
+					write(client_sock,logout,strlen(logout));
+				}
 				close(client_sock);
 				break;			// thread termination condition
 			}
