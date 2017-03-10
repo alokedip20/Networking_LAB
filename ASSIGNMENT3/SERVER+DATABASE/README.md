@@ -65,8 +65,18 @@
 	    				<td style="border: 1px solid black;">1</td>
 	  				</tr>
 				</table>
-				<b>User-1 wants to send message to User-2:</b>
-				User-1 will type : <b> user_name2@"message_for_user-2"</b>
+				<li>
+					<ul>
+						<li>
+							<b>User-1 wants to send message to User-2:</b>
+						User-1 will type : <b> XYZ@"Hi from ABC"</b>
+						</li>
+						<li>
+							<b>User-2 wants to send message to User-1:</b>
+						User-2 will type : <b> ABC@"Hi from XYZ"</b>
+						</li>
+					</ul>
+				</li>
 			</li>
 			<li>
 				Server will parse the total message and update the database with the message accordingly.
