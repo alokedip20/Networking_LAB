@@ -90,8 +90,8 @@ int main(int argc, char *argv[])
 				*** Data -> most recent message for the user will be stored
 				*** Status -> Online / Offline 
 	*/
-	//create_database(DATABASE_NAME);
-	//create_table(TABLE_NAME);
+	/*create_database(DATABASE_NAME);
+	create_table(TABLE_NAME);*/
 
 	/* accept the client socket 
 		** 1st argument : socket_descriptor that has been returned by socket()
@@ -158,13 +158,15 @@ void *handler(void * sock){
 void *handler_read(void *sock){
 	int client_sock = *(int*)sock;
 	int n;
+	int insert_flag = 0;
 	char data[256];
 	string parse[2];
-	char ACK_MSG[] = "You have successfully registered in server You can type Messege\0";
+	char ACK_MSG[] = "You have successfully registered in server You can type Messege. Your Pin => \0";
 	char NOT_ACTIVE[] = "USER is not active so can not send MEssege.\0";
 	char special_query[] = "finger\0";
 	string frame="";
 	int flag = -999;
+	record pass;
 	while(1){
 		if((n = read(client_sock,data,255)) < 0){
 			error("Error reading client socket");
@@ -202,14 +204,36 @@ void *handler_read(void *sock){
 				cout<<" User hit server : "<<d<<endl;
 				flag = retrieve_status(d);
 				if( flag == 0){
-					socket_update(d,"1",client_sock);
 					cout<<" User "<<d<<" already registered : Update socket for User : "<<d<<endl;
-					write(client_sock,"You are already registered",27);
+					write(client_sock,"You are already registered. Type Password",42);
+					socket_update(d,"0",client_sock);
+					insert_flag = 1;
 				}
 				else if(flag == -1){
-					insert(d,"",1,client_sock);
+					if(!insert_flag){
+						stringstream temp;
+						srand(time(NULL));
+						int pin = rand()%1000;
+						temp << pin;
+						insert(d,"",1,client_sock,temp.str());
+						cout<<" PIN : "<<temp.str()<<endl;
+						strcat(ACK_MSG,(temp.str()).c_str());
+						insert_flag++;
+					}
+					else{
+						record cred = retrieve(client_sock);
+						char *pass = (char *)(cred.pin).c_str();
+						if(!strncmp(pass,data,strlen(pass))){
+							socket_update(cred.username,"1",client_sock);
+							write(client_sock,"successfully Logged in",23);
+						}
+						else{
+							write(client_sock,"Wrong password :( ",19);
+						}
+					}
 					write(client_sock,ACK_MSG,strlen(ACK_MSG));
 				}
+				bzero(d,256);
 			}
 			else{
 				/*
@@ -263,7 +287,7 @@ void *handler_write(void *sock){
 			K++;                       
 		}
 		else{
-			K = TIME_LIMIT - 3;
+			K = TIME_LIMIT;
 			if(strncmp(data,prev_data,strlen(data))){
 				if((n = write(client_sock,data,255)) < 0){
 					error("Error writing client socket");

@@ -127,8 +127,8 @@ void *handler_write(void *sock){
 			error("Can not write into socket");
 		}
 		else{
-			printf("%s\n","Succesfully send data" );
-			bzero(data,sizeof(data));
+			printf("Succesfully send data %s",data );
+			bzero(data,256);
 		}
 	}
 }

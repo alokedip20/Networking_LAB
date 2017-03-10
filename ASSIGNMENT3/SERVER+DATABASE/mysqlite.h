@@ -2,7 +2,7 @@
 #define mysqlite_h_
 extern struct user_data
 {  
-   string username,message,status;
+   string username,message,status,pin;
    int id;
 }dummy;
 typedef struct user_data record;
@@ -14,6 +14,7 @@ int count_active_users(void);
 void clean_result(void);
 int retrieve_status(string user_name);
 record* retrieve_active_user(void);
+record retrieve(int id);
 bool socket_update(string user_name,string status,int id);
 string TABLE_NAME = "USERS";
 string DATABASE_NAME = "Networking_Assignmenet3.db";
@@ -29,8 +30,9 @@ static int call_back(void *data,int argc,char *argv[],char **azColName){
    int i;
    result.id = atoi(argv[0]);
    result.username = argv[1];
-   result.message = argv[2];
-   result.status = argv[3];
+   result.pin = argv[2];
+   result.message = argv[3];
+   result.status = argv[4];
    return 0;
 }
 static int call_back_status(void *data,int argc,char *argv[],char **azColName){
@@ -65,6 +67,7 @@ void create_table(string table_name){
       string sql_query = "CREATE TABLE "+TABLE_NAME+"("  \
          "ID           INT    PRIMARY KEY   NOT NULL," \
          "USERNAME           TEXT    NOT NULL," \
+         "PASSWORD           TEXT    NOT NULL," \
          "DATA           CHAR(256)    NOT NULL," \
          "STATUS        INT      NOT NULL);";
       db = sqlite3_exec(database_object,(const char *)(sql_query.c_str()),call_back,0,&error);
@@ -82,7 +85,7 @@ void create_table(string table_name){
    }
    sqlite3_close(database_object);
 }
-void insert(string user_name,string data,int state,int id){
+void insert(string user_name,string data,int state,int id,string pas){
    int db;
    A = user_name;
    sqlite3 *database_object=NULL;
@@ -95,8 +98,8 @@ void insert(string user_name,string data,int state,int id){
       temp2 << id;
       s2 = temp2.str();
       s = temp.str();
-      string sql_query = "INSERT INTO "+TABLE_NAME +"(ID,USERNAME,DATA,STATUS)" \
-                           " VALUES ("+s2+","+"'"+A+"'"+","+"'"+data+"'"+","+"'"+s+"'"+");";
+      string sql_query = "INSERT INTO "+TABLE_NAME +"(ID,USERNAME,PASSWORD,DATA,STATUS)" \
+                           " VALUES ("+s2+","+"'"+A+"'"+","+"'"+pas+"',"+"'"+data+"'"+","+"'"+s+"'"+");";
       db = sqlite3_exec(database_object,(const char *)sql_query.c_str(),call_back, 0,&error);
       if(db == SQLITE_OK){
          /*
