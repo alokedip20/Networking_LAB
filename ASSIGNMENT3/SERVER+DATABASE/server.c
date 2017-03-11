@@ -282,7 +282,7 @@ void *handler_write(void *sock){
 				}
 				//close(client_sock);	
 			}
-			cout<<" Waiting to close the connectio ....... "<<name<<endl;
+			cout<<" Waiting for closing the connection for ......... "<<name<<endl;
 			K++;                       
 		}
 		else{
