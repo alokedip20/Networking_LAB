@@ -15,7 +15,7 @@ int connect_to_server(const char *argv[],struct sockaddr_in &server_addr);
 void display_server_details(struct sockaddr_in addr);
 bool req_packet(unsigned char opcode,char *filename, char request_buf[],int *request_length);
 void GET_FILE(char filename[],struct sockaddr_in server_addr,int socket);
-bool ack_packet(int block,char ack_buf[]);
+int ack_packet(int block,char ack_buf[]);
 /*
 	** server_address port <-g filename> <-p filename>
 */
@@ -136,7 +136,8 @@ void GET_FILE(char filename[],struct sockaddr_in server_addr,int socket){
 	unsigned char response_buf[MAX_FILE_BUFFER + 1] = {0};
 	char ack_buf[256] = {0};
 	int received_packet,next_packet;
-	received_packet = next_packet = 0;
+	received_packet = 0;
+	next_packet = 0;
 	int TID = 0;
 	struct sockaddr_in anonymous;
 	bzero((char *)&anonymous,sizeof(anonymous));
@@ -211,7 +212,7 @@ void GET_FILE(char filename[],struct sockaddr_in server_addr,int socket){
 		      		received_packet &= 0xff00;
 		      		received_packet += (*response_handler++ & 0x00ff);	// pointer points to the begining of the actual data section
 					memcpy((char *)file_buffer,response_handler,response-4); 	// As first 4 byte has already been processed					
-		      		printf("The opcode = %02x --- The Block received -- %d\n",server_opcode,received_packet);
+		      		printf(" The opcode = %02x --- The Block received -- %d\n",server_opcode,received_packet);
 					/*
 						** First time server response handler data limit exceed
 					*/
@@ -240,9 +241,10 @@ void GET_FILE(char filename[],struct sockaddr_in server_addr,int socket){
 					}
 					else{
 						next_packet++;
-						int ack_length = sprintf(ack_buf,"%c%c%c%c",0x00,ACK,0x00,0x00);
+						/*int ack_length = sprintf(ack_buf,"%c%c%c%c",0x00,ACK,0x00,0x00);
 						ack_buf[2] = (next_packet &0xff00) >> 8;
-						ack_buf[3] = next_packet & 0x00ff;
+						ack_buf[3] = next_packet & 0x00ff;*/
+						int ack_length = ack_packet(next_packet,ack_buf);
 						if(ack_length != sendto(socket,ack_buf,ack_length,0,(struct sockaddr *)&server_addr,
 												sizeof(server_addr))){
 							printf("%s\n"," Can not sent Ack Correctly  for next data packet" );
@@ -283,7 +285,7 @@ void GET_FILE(char filename[],struct sockaddr_in server_addr,int socket){
 		}
 	}
 }
-bool ack_packet(int block,char ack_buf[]){
+int ack_packet(int block,char ack_buf[]){
 	/*
 		** 4 Byte data:
 			*** 2 byte opcode 0x0004
@@ -292,7 +294,6 @@ bool ack_packet(int block,char ack_buf[]){
 	int packet_length = sprintf(ack_buf,"%c%c%c%c",0x00,ACK,0x00,0x00);
 	ack_buf[2] = (block & 0xff00) >> 8;
 	ack_buf[3] = (block & 0x00ff);
-	printf(" Ack packet length : %d\n",packet_length);
-	printf(" Opcode : %02x ---- BLock number : %02x%02x\n",ACK,ack_buf[2],ack_buf[3]);
-	return (packet_length > 0);
+	printf(" After Receiving ==> Ack packet Length : %d == Opcode : %02x ---- Block number : %02x:%02x\n",packet_length,ACK,ack_buf[2],ack_buf[3]&0x00ff);
+	return packet_length;
 }
