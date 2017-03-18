@@ -16,7 +16,6 @@ void display_server_details(struct sockaddr_in addr);
 bool req_packet(unsigned char opcode,char *filename, char request_buf[],int *request_length);
 void GET_FILE(char filename[],struct sockaddr_in server_addr,int socket);
 bool ack_packet(int block,char ack_buf[]);
-void tget (char *pFilename, struct sockaddr_in server, char *pMode, int sock);
 /*
 	** server_address port <-g filename> <-p filename>
 */
