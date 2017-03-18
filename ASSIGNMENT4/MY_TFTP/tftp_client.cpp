@@ -123,14 +123,9 @@ void GET_FILE(char filename[],struct sockaddr_in server_addr,int socket){
 	printf("Socket - %d\n GOING TO DOWNLOAD FILE FROM THE SERVER\n",socket );
 	printf("%s\n","-------------------------------------------------------" );
 	FILE *fp = NULL;
-	fp = fopen(filename,"w");
 	int data_section = 512;			//tftpd will send 516 = 4 + 512 bytes  
 	extern int errno;				// So that this var can be modified in case of any error
 	int response = data_section + 4;	// server response shoul be 516
-	if(fp == NULL){
-		perror(" Filecan not be opened for writing");
-		exit(0);
-	}
 	unsigned char file_buffer[MAX_FILE_BUFFER + 1] = {0};		// ascii >= 0 clean the buffer to prevent garbage writing
 	unsigned char response_buf[MAX_FILE_BUFFER + 1] = {0};
 	char ack_buf[256] = {0};
@@ -145,6 +140,7 @@ void GET_FILE(char filename[],struct sockaddr_in server_addr,int socket){
 	int server_opcode;
 	bool first_time_response = true;
 	int i;
+	bool file_open = true;
 	while(response == data_section + 4){
 		/*
 			** receive each chunk of data
@@ -228,7 +224,7 @@ void GET_FILE(char filename[],struct sockaddr_in server_addr,int socket){
 						** To make ensure that the received packet is data packet
 					*/
 					if(server_opcode != 0x03){
-						printf(" The received packet is not data packet. Opcode %02x\n",server_opcode);
+						printf(" The received packet is not data packet. Opcode %02x -- Error Message ==> %s\n",server_opcode,response_handler);
 						if(server_opcode > 0x05){
 							printf(" Wrong opcode %02x\n",server_opcode );
 							int error_length = sprintf((char *)response_buf,"%c%c%c%c%s%c",0x00,ERR,0x00,0x04,"Illegal TFTP operation",0x00);
@@ -239,6 +235,14 @@ void GET_FILE(char filename[],struct sockaddr_in server_addr,int socket){
 						}
 					}
 					else{
+						if(file_open){
+							fp = fopen(filename,"w");
+							if(fp == NULL){
+								perror(" Filecan not be opened for writing");
+								exit(0);
+							}
+							file_open = !file_open;
+						}
 						next_packet++;
 						int ack_length = ack_packet(next_packet,ack_buf);
 						if(ack_length != sendto(socket,ack_buf,ack_length,0,(struct sockaddr *)&server_addr,
