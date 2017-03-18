@@ -1,8 +1,8 @@
 #include <iostream>
 #include <stdio.h>
-#include <sys/socket.h>		// socket
+#include <sys/socket.h>		
 #include <netinet/in.h>
-#include <arpa/inet.h>		// net to host and vice versa
+#include <arpa/inet.h>		
 #include <netdb.h>
 #include <string.h>
 #include <cstdlib>
@@ -123,7 +123,6 @@ void GET_FILE(char filename[],struct sockaddr_in server_addr,int socket){
 	printf("Socket - %d\n GOING TO DOWNLOAD FILE FROM THE SERVER\n",socket );
 	printf("%s\n","-------------------------------------------------------" );
 	FILE *fp = NULL;
-	//char *mode = "octet\0";
 	fp = fopen(filename,"w");
 	int data_section = 512;			//tftpd will send 516 = 4 + 512 bytes  
 	extern int errno;				// So that this var can be modified in case of any error
@@ -241,9 +240,6 @@ void GET_FILE(char filename[],struct sockaddr_in server_addr,int socket){
 					}
 					else{
 						next_packet++;
-						/*int ack_length = sprintf(ack_buf,"%c%c%c%c",0x00,ACK,0x00,0x00);
-						ack_buf[2] = (next_packet &0xff00) >> 8;
-						ack_buf[3] = next_packet & 0x00ff;*/
 						int ack_length = ack_packet(next_packet,ack_buf);
 						if(ack_length != sendto(socket,ack_buf,ack_length,0,(struct sockaddr *)&server_addr,
 												sizeof(server_addr))){
@@ -270,9 +266,7 @@ void GET_FILE(char filename[],struct sockaddr_in server_addr,int socket){
 		/*
 			** Last chunk data
 		*/
-		int ack_length = sprintf(ack_buf,"%c%c%c%c",0x00,ACK,0x00,0x00);
-		ack_buf[2] = (next_packet &0xff00) >> 8;
-		ack_buf[3] = next_packet & 0x00ff;
+		int ack_length = ack_packet(next_packet,ack_buf);
 		if(ack_length != sendto(socket,ack_buf,ack_length,0,(struct sockaddr *)&server_addr,
 								sizeof(server_addr))){
 			printf("%s\n"," Can not sent Ack Correctly  for next data packet" );
