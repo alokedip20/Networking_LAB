@@ -256,7 +256,9 @@ void GET_FILE(char filename[],struct sockaddr_in server_addr,int socket){
 		}
 		if(i == MAX_RETRY){
 			printf("%s\n","Exhausted with retrying ........ ");
-			fclose(fp);
+			if(!file_open){
+				fclose(fp);
+			}
 			return;
 		}
 		if(fwrite((char *)file_buffer,1,response-4,fp) != (unsigned int)(response-4)){
