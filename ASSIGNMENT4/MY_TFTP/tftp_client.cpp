@@ -19,10 +19,11 @@ int ack_packet(int block,char ack_buf[]);
 /*
 	** server_address port <-g filename> <-p filename>
 */
+char current_dir[256];
 int main(int argc, char const *argv[])
 {
 	if(!validation(argc)){
-		perror(" invalid argument");
+		fprintf(stderr, "%s\n"," Press -g followed by file_name to download file and -p followed by file_name to upload the file into the tftp server");
 		return ERROR;
 	}
 	int client_socket = -1;
@@ -42,6 +43,8 @@ int main(int argc, char const *argv[])
 	display_server_details(server_addr);
 	unsigned char opcode = 0x06;
 	char filename[50];
+	getcwd(current_dir,256);
+	strcat(current_dir,"/");
 	switch(argv[3][1]){
 		case 'g':
 			opcode = RRQ;
@@ -100,7 +103,6 @@ int connect_to_server(const char *argv[],struct sockaddr_in &server_addr){
   	return client_socket;
 }
 bool validation(int argc){
-	cout<<" Press -g followed by file name to download file and -p followed by file name to upload the file into the tftp server"<<endl;
 	return (argc == 5);
 }
 void display_server_details(struct sockaddr_in addr){
@@ -236,6 +238,13 @@ void GET_FILE(char filename[],struct sockaddr_in server_addr,int socket){
 					}
 					else{
 						if(file_open){
+							char *token = strtok(filename,"/");
+							while(token != NULL){
+								filename = token;		// to pick the last node of the directory input
+								token = strtok(NULL,"/");
+							}
+							strcat(current_dir,filename);
+							printf("The Absolute path --> %s\n",current_dir);
 							fp = fopen(filename,"w");
 							if(fp == NULL){
 								perror(" Filecan not be opened for writing");
@@ -249,7 +258,7 @@ void GET_FILE(char filename[],struct sockaddr_in server_addr,int socket){
 												sizeof(server_addr))){
 							printf("%s\n"," Can not sent Ack Correctly  for next data packet" );
 						}
-						break;
+						break;		// Got a valid data packet so break the RETRY_LOOP and write that into file
 					}
 				}
 			}
@@ -263,7 +272,7 @@ void GET_FILE(char filename[],struct sockaddr_in server_addr,int socket){
 		}
 		if(fwrite((char *)file_buffer,1,response-4,fp) != (unsigned int)(response-4)){
 			fclose(fp);
-			sync();
+			sync();				// It will sync the inodes to  buffers and buffers to the disk --> filename
 			printf("%s\n","Can not write data to file Sorry ......... :(" );
 			return;
 		}
