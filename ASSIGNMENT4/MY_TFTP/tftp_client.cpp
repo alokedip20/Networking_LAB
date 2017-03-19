@@ -15,6 +15,7 @@ int connect_to_server(const char *argv[],struct sockaddr_in &server_addr);
 void display_server_details(struct sockaddr_in addr);
 bool req_packet(unsigned char opcode,char *filename, char request_buf[],int *request_length);
 void GET_FILE(char filename[],struct sockaddr_in server_addr,int socket);
+void POST_FILE(char filename[],struct sockaddr_in server_addr,int socket);
 int ack_packet(int block,char ack_buf[]);
 /*
 	** server_address port <-g filename> <-p filename>
@@ -83,7 +84,7 @@ int main(int argc, char const *argv[])
 			GET_FILE(filename,server_addr,client_socket);
 			break;
 		case 0x02:
-			//POST_FILE();
+			POST_FILE(filename,server_addr,client_socket);
 			break;
 		default: 
 			cout<<" No predefined function "<<endl;
@@ -150,8 +151,7 @@ void GET_FILE(char filename[],struct sockaddr_in server_addr,int socket){
 		bzero((char *)response_buf,MAX_FILE_BUFFER);
 		bzero((char *)file_buffer,MAX_FILE_BUFFER);
 		bzero(ack_buf,256);
-		for (i = 0; i < MAX_RETRY; i++)
-		{	
+		for (i = 0; i < MAX_RETRY; i++){	
 			response = -1;
 			errno = EAGAIN;
 			for (int j = 0; j < TIME_OUT && response < 0 && errno == EAGAIN; j++)
@@ -293,6 +293,208 @@ void GET_FILE(char filename[],struct sockaddr_in server_addr,int socket){
 			return;
 		}
 	}
+}
+void POST_FILE(char filename[],struct sockaddr_in server_addr,int socket){
+	printf(" FILENAME - %s\n",filename );
+	printf(" Server IP - %s\n",inet_ntoa(server_addr.sin_addr));
+	printf("Socket - %d\n GOING TO UPLOAD FILE FROM THE SERVER\n",socket );
+	printf("%s\n","-------------------------------------------------------" );
+	int received_packet = 0;
+	int sent_packet = 0;
+	char backup_buffer[MAXREQPACKET][MAX_FILE_BUFFER+1];     	// For storing data incase of lost ACK
+	struct sockaddr_in anonymous;
+	int server_length = sizeof(anonymous);
+	int i,response;
+	int TID = 0;
+	char response_buf[MAX_FILE_BUFFER+1];
+	char *response_handler = NULL;
+	char file_buffer[MAX_FILE_BUFFER+1];
+	unsigned char server_opcode;
+	int error_length;
+	for ( i = 0; i < MAX_RETRY; i++){
+		response = -1;
+		for (int j = 0; j < TIME_OUT && response < 0; j++){
+			response = recvfrom(socket,response_buf,sizeof(response_buf),MSG_DONTWAIT,(struct sockaddr *)&anonymous,
+								(socklen_t *)&server_length);
+			usleep(1000);
+		}
+		if(response < 0){
+			fprintf(stderr, "%s\n","Can not get WRQ ACK from server");
+		}
+		else{
+			/*
+				** Got a >0 response
+			*/
+			if(!TID){
+				TID = ntohs(anonymous.sin_port);
+				server_addr.sin_port = htons(TID);
+			}
+			if(server_addr.sin_addr.s_addr != anonymous.sin_addr.s_addr){
+				fprintf(stderr, "%s -->%s\n","Got response from Different Server",inet_ntoa(anonymous.sin_addr));
+				i--;
+				continue;
+			}
+			/*
+				** Got response from intended server
+			*/
+			else{
+				if(TID != htons(server_addr.sin_port)){
+					printf(" Different Transmission Identifier Act - %d But - %d \n",TID,anonymous.sin_port );
+					int error_length = sprintf((char *)response_buf,"%c%c%c%c%s%c",0x00,ERR,0x00,0x05,"Bad/Unknown TID",0x00);
+					if(error_length != sendto(socket,response_buf,error_length,0,(const struct sockaddr *)&server_addr,
+						sizeof(server_addr))){
+						perror("can not send error message");
+					}
+					i--;
+					continue;
+				}
+				/*
+					** All is Perfect
+				*/
+				response_handler = (char *)response_buf;
+				response_handler++;
+				server_opcode = *response_handler++;
+				received_packet = *response_handler++ << 8;
+		      	received_packet &= 0xff00;
+		      	received_packet += (*response_handler++ & 0x00ff);
+		      	if(server_opcode != ACK || received_packet != sent_packet){
+		      		/*
+						server sent wrong ACK
+		      		*/
+		      		printf(" Server sent wrong ACK .. Opcode -> %02x -- block number --> %d",server_opcode,received_packet);
+		      		if(server_opcode > ERR){
+						error_length = sprintf((char *)response_buf,"%c%c%c%c%s%c",0x00,ERR,0x00,0x04,"Illegal TFTP operation",0x00);
+		      			if(error_length != sendto(socket,response_buf,error_length,0,(struct sockaddr *)&server_addr,
+		      									server_length)){
+		      				fprintf(stderr, "%s\n","Can not send error packet to server.." );
+		      			}
+		      		}
+		      	}
+		      	else{
+		      		break;
+		      	}
+			}
+		}
+	}
+	if(i == MAX_RETRY){
+		fprintf(stderr, "%s\n","Exhausted with retrying........ :(" );
+		return;
+	}
+	printf(" Server sent correct ACK .. Opcode -> %02x -- block number --> %d\n",server_opcode,received_packet);	
+	/*
+		** Start the data transfer with the server
+	*/
+	FILE *fp = NULL;
+	if((fp = fopen(filename,"r")) == NULL){
+		fprintf(stderr, "%s\n","Can not open file for reading in client side" );
+		return;
+	}
+	int file_size = 0;
+	int data_section = 512;
+	int data_packet_length = 0;
+	while(true){
+		file_size = fread(file_buffer,1,data_section,fp);
+		sprintf(backup_buffer[received_packet],"%c%c%c%c",0x00,DATA,0x00,0x00);
+		backup_buffer[received_packet][2] = (sent_packet & 0xff00) >> 8 ;
+		backup_buffer[received_packet][3] = sent_packet & 0x00ff;
+		memcpy((char *)backup_buffer[received_packet]+4,file_buffer,file_size);
+		data_packet_length = file_size + 4;
+		printf(" Data packet [%d] has been prepared ..... Size : %d\n",sent_packet,data_packet_length);
+		if(data_packet_length != sendto(socket,backup_buffer[received_packet],data_packet_length,0,
+										(struct sockaddr *)&server_addr,server_length)){
+			fprintf(stderr, "%s\n","Can not sent data packet to server properly");
+			return;		// Abort transmition
+		}
+		/*
+			** Wait for next ack packet
+		*/
+		TID = 0;
+		for (i = 0; i < MAX_RETRY; i++){
+			response = -1;
+			for (int j = 0; j < TIME_OUT && response < 0; j++){
+				response = recvfrom(socket,response_buf,sizeof(response_buf),MSG_DONTWAIT,
+									(struct sockaddr *)&anonymous,(socklen_t *)&server_length);
+				usleep(1000);
+			}
+			if(response < 0){
+				fprintf(stderr, "%s\n","Client can not get ACK from the server");
+			}
+			else{
+				/*
+					Got some >0 response
+				*/
+				if(!TID){
+					TID = ntohs(anonymous.sin_port);
+					server_addr.sin_port = htons(TID);
+				}
+				if(server_addr.sin_addr.s_addr != anonymous.sin_addr.s_addr){
+					fprintf(stderr, "%s\n","Got response from different server" );
+					i--;
+					continue;
+				}
+				/*
+					** Got response from valid ip address
+				*/
+				if(TID != htons(server_addr.sin_port)){
+					printf(" Different Transmission Identifier Act - %d But - %d \n",TID,anonymous.sin_port );
+					error_length = sprintf((char *)response_buf,"%c%c%c%c%s%c",0x00,ERR,0x00,0x05,"Bad/Unknown TID",0x00);
+					if(error_length != sendto(socket,response_buf,error_length,0,(const struct sockaddr *)&server_addr,
+						sizeof(server_addr))){
+						perror("can not send error message");
+					}
+					i--;
+					continue;
+				}
+				/*
+					** All is perfect process the response
+				*/
+				response_handler = (char *)response_buf;
+				response_handler++;
+				server_opcode = *response_handler++;
+				received_packet = *response_handler++ << 8;
+		      	received_packet &= 0xff00;
+		      	received_packet += (*response_handler++ & 0x00ff);
+		      	if(server_opcode != ACK ||( received_packet != sent_packet)){
+		      		printf("This is not a ack packet... Opcode => %02x and acked block number - %d and actual ack number %d",server_opcode,received_packet,sent_packet);
+		      		if(server_opcode > ERR){
+						error_length = sprintf((char *)response_buf,"%c%c%c%c%s%c",0x00,ERR,0x00,0x04,"Illegal TFTP operation",0x00);
+		      			if(error_length != sendto(socket,response_buf,error_length,0,(struct sockaddr *)&server_addr,server_length)){
+		      				fprintf(stderr, "%s\n","Can not sent error packet to server");
+		      			}
+		      		}
+		      	}
+		      	else{
+		      		printf("Client got ack successfully opcode -> %02x ---- acked block %d\n",server_opcode,received_packet);
+		      		break;
+		      	}
+			}
+			/*
+				Retransmission of all datapackets those already have been backed up 
+			*/
+			for (int k = 0; i < sent_packet; k++){
+				if(sendto(socket,backup_buffer[i],data_packet_length,0,(struct sockaddr *)&server_addr,
+						  server_length) < 0){
+					printf("can not sent back up packet index %d\n",i);
+					return; //abort transmission
+				}
+			}
+		}
+		if(i == MAX_RETRY){
+			fprintf(stderr, "%s\n","Max number of Retrying has been done..." );
+			return;
+		}
+		if(file_size < data_section){
+			printf("%s\n","All file has been read.. " );
+			bzero(file_buffer,MAX_FILE_BUFFER+1);
+			break;
+		}
+		sent_packet++;
+	}	
+	if(fp != NULL){
+		fclose(fp);
+		sync();
+	}
+	return;
 }
 int ack_packet(int block,char ack_buf[]){
 	/*
