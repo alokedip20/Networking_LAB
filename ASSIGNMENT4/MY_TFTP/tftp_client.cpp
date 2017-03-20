@@ -394,6 +394,8 @@ void POST_FILE(char filename[],struct sockaddr_in server_addr,int socket){
 	int data_packet_length = 0;
 	while(true){
 		file_size = fread(file_buffer,1,data_section,fp);
+		sent_packet++;
+		received_packet = 0;	// Always take the first row as data packet and leave others for backup
 		sprintf(backup_buffer[received_packet],"%c%c%c%c",0x00,DATA,0x00,0x00);
 		backup_buffer[received_packet][2] = (sent_packet & 0xff00) >> 8 ;
 		backup_buffer[received_packet][3] = sent_packet & 0x00ff;
@@ -488,7 +490,6 @@ void POST_FILE(char filename[],struct sockaddr_in server_addr,int socket){
 			bzero(file_buffer,MAX_FILE_BUFFER+1);
 			break;
 		}
-		sent_packet++;
 	}	
 	if(fp != NULL){
 		fclose(fp);
