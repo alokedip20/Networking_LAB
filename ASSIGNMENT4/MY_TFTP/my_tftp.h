@@ -8,3 +8,11 @@
 #define MAX_FILE_BUFFER 1024
 #define MAX_RETRY 10 
 #define TIME_OUT 2000
+char ERROR_MESSAGE[8][256] = {	"Not defined, see error message (if any).\0",
+								"File not found.\0",
+								"Access violation.\0",
+								"Disk full or allocation exceeded.\0",
+								"Illegal TFTP operation.\0",
+								"Unknown transfer ID.\0",
+								"File already exists.\0",
+								"No such user.\0"};
