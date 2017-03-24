@@ -17,10 +17,11 @@ bool req_packet(unsigned char opcode,char *filename, char request_buf[],int *req
 void GET_FILE(char filename[],struct sockaddr_in server_addr,int socket);
 void POST_FILE(char filename[],struct sockaddr_in server_addr,int socket);
 int ack_packet(int block,char ack_buf[]);
+int error_packet(unsigned char error_buf[],unsigned char error_code);
+char current_dir[256];
 /*
 	** server_address port <-g filename> <-p filename>
 */
-char current_dir[256];
 int main(int argc, char const *argv[])
 {
 	if(!validation(argc)){
@@ -128,7 +129,7 @@ void GET_FILE(char filename[],struct sockaddr_in server_addr,int socket){
 	FILE *fp = NULL;
 	int data_section = 512;			//tftpd will send 516 = 4 + 512 bytes  
 	extern int errno;				// So that this var can be modified in case of any error
-	int response = data_section + 4;	// server response shoul be 516
+	int response = data_section + 4;	// server response should be 516
 	unsigned char file_buffer[MAX_FILE_BUFFER + 1] = {0};		// ascii >= 0 clean the buffer to prevent garbage writing
 	unsigned char response_buf[MAX_FILE_BUFFER + 1] = {0};
 	char ack_buf[256] = {0};
@@ -153,22 +154,22 @@ void GET_FILE(char filename[],struct sockaddr_in server_addr,int socket){
 		bzero(ack_buf,256);
 		for (i = 0; i < MAX_RETRY; i++){	
 			response = -1;
-			errno = EAGAIN;
-			for (int j = 0; j < TIME_OUT && response < 0 && errno == EAGAIN; j++)
+			for (int j = 0; j < TIME_OUT && response < 0; j++)
 			{
 				response = recvfrom(socket,response_buf,sizeof(response_buf)-1,MSG_DONTWAIT,(struct sockaddr *)&anonymous,
-					(socklen_t *)&len);
-				usleep(1000);
+									(socklen_t *)&len);
+				usleep(1000);	// sleep in microseconds max time out => 20 seconds
 			}
+			/*
+				** get the port from which response has come.
+					*** TID => Transfer Identifier
+					*** We have stored the TID only for the first time to ensure reliable connection
+			*/
 			if(!TID){
 				TID = ntohs(anonymous.sin_port);			// get the port from where the response has come
 				server_addr.sin_port = htons(TID);		// Consider that port as the main port
 			}
-			if(response < 0 && errno != EAGAIN){
-				printf("Response --> %d error no --> %d\n",response,errno);
-				perror(" Client could not receive any response from EAGAIN error");
-			}
-			if(response < 0 && errno == EAGAIN){
+			if(response < 0){
 				printf("Response --> %d error no --> %d\n",response,errno);
 				perror(" Client could not receive any response from error.. Time Out");				
 			}
@@ -188,9 +189,12 @@ void GET_FILE(char filename[],struct sockaddr_in server_addr,int socket){
 					** Server IP address is matched. Intended server
 				*/
 				else{
+					/*
+						** Validate the previously stored TID with new one.
+					*/
 					if(TID != htons(server_addr.sin_port)){
 						printf(" Different Transmission Identifier Act - %d But - %d \n",TID,anonymous.sin_port );
-						int error_length = sprintf((char *)response_buf,"%c%c%c%c%s%c",0x00,ERR,0x00,0x05,"Bad/Unknown TID",0x00);
+						int error_length = error_packet(response_buf,0x05); //unknown TID error
 						if(error_length != sendto(socket,response_buf,error_length,0,(const struct sockaddr *)&server_addr,
 							sizeof(server_addr))){
 							perror("can not send error message");
@@ -229,7 +233,7 @@ void GET_FILE(char filename[],struct sockaddr_in server_addr,int socket){
 						printf(" The received packet is not data packet. Opcode %02x -- Error Message ==> %s\n",server_opcode,response_handler);
 						if(server_opcode > 0x05){
 							printf(" Wrong opcode %02x\n",server_opcode );
-							int error_length = sprintf((char *)response_buf,"%c%c%c%c%s%c",0x00,ERR,0x00,0x04,"Illegal TFTP operation",0x00);
+							int error_length = error_packet(response_buf,0x04); //Illegal FTP operation
 							if(error_length != sendto(socket,response_buf,error_length,0,(struct sockaddr *)&server_addr,
 												sizeof(server_addr))){
 								perror(" Wrong bytes error message sent");
@@ -306,7 +310,7 @@ void POST_FILE(char filename[],struct sockaddr_in server_addr,int socket){
 	int server_length = sizeof(anonymous);
 	int i,response;
 	int TID = 0;
-	char response_buf[MAX_FILE_BUFFER+1];
+	unsigned char response_buf[MAX_FILE_BUFFER+1];
 	char *response_handler = NULL;
 	char file_buffer[MAX_FILE_BUFFER+1];
 	unsigned char server_opcode;
@@ -340,7 +344,7 @@ void POST_FILE(char filename[],struct sockaddr_in server_addr,int socket){
 			else{
 				if(TID != htons(server_addr.sin_port)){
 					printf(" Different Transmission Identifier Act - %d But - %d \n",TID,anonymous.sin_port );
-					int error_length = sprintf((char *)response_buf,"%c%c%c%c%s%c",0x00,ERR,0x00,0x05,"Bad/Unknown TID",0x00);
+					int error_length = error_packet(response_buf,0x05); // unknown TID
 					if(error_length != sendto(socket,response_buf,error_length,0,(const struct sockaddr *)&server_addr,
 						sizeof(server_addr))){
 						perror("can not send error message");
@@ -363,7 +367,7 @@ void POST_FILE(char filename[],struct sockaddr_in server_addr,int socket){
 		      		*/
 		      		printf(" Server sent wrong ACK .. Opcode -> %02x -- block number --> %d",server_opcode,received_packet);
 		      		if(server_opcode > ERR){
-						error_length = sprintf((char *)response_buf,"%c%c%c%c%s%c",0x00,ERR,0x00,0x04,"Illegal TFTP operation",0x00);
+						error_length = error_packet(response_buf,0x04);
 		      			if(error_length != sendto(socket,response_buf,error_length,0,(struct sockaddr *)&server_addr,
 		      									server_length)){
 		      				fprintf(stderr, "%s\n","Can not send error packet to server.." );
@@ -439,7 +443,7 @@ void POST_FILE(char filename[],struct sockaddr_in server_addr,int socket){
 				*/
 				if(TID != htons(server_addr.sin_port)){
 					printf(" Different Transmission Identifier Act - %d But - %d \n",TID,anonymous.sin_port );
-					error_length = sprintf((char *)response_buf,"%c%c%c%c%s%c",0x00,ERR,0x00,0x05,"Bad/Unknown TID",0x00);
+					error_length = error_packet(response_buf,0x05);
 					if(error_length != sendto(socket,response_buf,error_length,0,(const struct sockaddr *)&server_addr,
 						sizeof(server_addr))){
 						perror("can not send error message");
@@ -459,7 +463,7 @@ void POST_FILE(char filename[],struct sockaddr_in server_addr,int socket){
 		      	if(server_opcode != ACK ||( received_packet != sent_packet)){
 		      		printf("This is not a ack packet... Opcode => %02x and acked block number - %d and actual ack number %d",server_opcode,received_packet,sent_packet);
 		      		if(server_opcode > ERR){
-						error_length = sprintf((char *)response_buf,"%c%c%c%c%s%c",0x00,ERR,0x00,0x04,"Illegal TFTP operation",0x00);
+						error_length = error_packet(response_buf,0x04);
 		      			if(error_length != sendto(socket,response_buf,error_length,0,(struct sockaddr *)&server_addr,server_length)){
 		      				fprintf(stderr, "%s\n","Can not sent error packet to server");
 		      			}
@@ -473,7 +477,7 @@ void POST_FILE(char filename[],struct sockaddr_in server_addr,int socket){
 			/*
 				Retransmission of all datapackets those already have been backed up 
 			*/
-			for (int k = 0; i < sent_packet; k++){
+			for (int k = 0; i <= received_packet; k++){
 				if(sendto(socket,backup_buffer[i],data_packet_length,0,(struct sockaddr *)&server_addr,
 						  server_length) < 0){
 					printf("can not sent back up packet index %d\n",i);
@@ -508,4 +512,9 @@ int ack_packet(int block,char ack_buf[]){
 	ack_buf[3] = (block & 0x00ff);
 	printf(" After Receiving ==> Ack packet Length : %d == Opcode : %02x ---- Block number : %02x:%02x\n",packet_length,ACK,ack_buf[2],ack_buf[3]&0x00ff);
 	return packet_length;
+}
+int error_packet(unsigned char error_buf[],unsigned char error_code){
+	int length = sprintf((char *)error_buf,"%c%c%c%c%s%c",0x00,ERR,0x00,error_code,ERROR_MESSAGE[error_code],0x00);
+	return length;
+
 }
