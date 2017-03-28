@@ -15,4 +15,4 @@ char ERROR_MESSAGE[8][256] = {	"Not defined, see error message (if any).\0",
 								"Unknown transfer ID.\0",
 								"File already exists.\0",
 								"No such user.\0"};
-struct timeval time_channel,start_time,end_time;
+struct timeval time_channel,start_time,end_time ;
